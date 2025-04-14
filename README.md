@@ -8,8 +8,8 @@ Sharing MATLAB code and data for reproducing results and facilitating review.
 
 ## Repository Structure
 
-* **`TestRegime`**: MATLAB simulation code for optimization of proof test regime.
-* **`FeedMPC`**: MATLAB simulation code for DAC of the feed pump using multi-stage NMPC.
+* **`TestRegime.m`**: MATLAB simulation code for optimization of proof test regime.
+* **`FeedMPC.m`**: MATLAB simulation code for DAC of the feed pump using multi-stage NMPC.
 
 ## IEEE International Conference on Instrumentation, Control, and Automation Submission
 
