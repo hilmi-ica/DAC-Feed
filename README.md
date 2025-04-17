@@ -10,6 +10,12 @@ Sharing MATLAB code and data for reproducing results and facilitating review.
 
 * **`TestRegime.m`**: MATLAB simulation code for optimization of proof test regime.
 * **`FeedMPC.m`**: MATLAB simulation code for DAC of the feed pump using multi-stage NMPC.
+* **`DistTree.m`**: MATLAB function code to accompany `FeedMPC.m` for realization of disturbance scenarios.
+
+## Requirement
+
+* [Matlab Optimization Toolbox](https://se.mathworks.com/products/optimization.html)
+* [YALMIP: A Toolbox for Modeling and Optimization in MATLAB](https://yalmip.github.io)
 
 ## IEEE International Conference on Instrumentation, Control, and Automation Submission
 
