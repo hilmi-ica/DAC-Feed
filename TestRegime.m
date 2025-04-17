@@ -87,7 +87,7 @@ plot(M_vals(highlightIdx), PFDAvg(highlightIdx), 'o', ...
 
 % Labels and annotations
 xlabel('$M$', 'Interpreter', 'latex');
-ylabel('$\overline{PFD}$', 'Interpreter', 'latex');
+ylabel('$E{PFD}$', 'Interpreter', 'latex');
 grid on;
 set(gca, 'FontSize', 14);
 
