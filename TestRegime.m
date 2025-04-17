@@ -1,8 +1,8 @@
 clear; close all; clc;
 
 %% Parameters
-gamma = 4e-5; b0 = 5; alpha = 0.5; beta = 0.1; lamf = 4e-7;        
-T = 73000; maxM = 200; dt = 0.25;        
+gamma = 4e-5; b0 = 5; alpha = 0.5; beta = 0.3; lamf = 4e-7;        
+T = 26280; maxM = 200; dt = 1;        
 P_init = [0 0 0 1];   
 hbar   = waitbar(0, "Simulating Test Scheduling Optimization...");
 
@@ -76,22 +76,22 @@ plot(M_vals, PFDAvg, '-p', 'LineWidth', 2, ...
     'MarkerFaceColor', [1 0.5 0]); hold on;
 
 % Add SIL targets
-yline(0.01, 'r--', 'LineWidth', 2); 
+% yline(0.01, 'r--', 'LineWidth', 2); 
 yline(0.001, 'r--', 'LineWidth', 2);
 
 % Mark specific test count
-highlightIdx = 8;
+highlightIdx = 4;
 plot(M_vals(highlightIdx), PFDAvg(highlightIdx), 'o', ...
     'LineWidth', 2, 'MarkerSize', 15, ...
     'MarkerFaceColor', "#77AC30", 'Color', "#0072BD");
 
 % Labels and annotations
 xlabel('$M$', 'Interpreter', 'latex');
-ylabel('$E{PFD}$', 'Interpreter', 'latex');
+ylabel('$E(PFD)$', 'Interpreter', 'latex');
 grid on;
 set(gca, 'FontSize', 14);
 
 % Annotations
-text(144, 0.0109, 'Safety Integrity Level 2', 'Color', 'r', 'FontSize', 14);
-text(9.26, 0.0028, 'Preferred', 'FontSize', 14);
-text(19.48, 0.0006, 'Optimal', 'FontSize', 14);
+text(145, 0.0014, 'Lower Bound of SIL 2', 'Color', 'r', 'FontSize', 14);
+text(7.42, 0.002, 'Preferred', 'FontSize', 14);
+text(177, 0.0005, 'Optimal', 'FontSize', 14);
