@@ -257,8 +257,8 @@ plot(times, PFD(1:end-1), 'LineWidth', 2, 'Color', [0.49 0.18 0.56]); hold on
 yline(PFDAvg, 'LineWidth', 2, 'LineStyle', '--', 'Color', [0.85 0.33 0.1]);
 xlim([0 times(end)])
 xticks([0 tau 2*tau 3*tau]); xticklabels({'0','\tau','2\tau','3\tau'})
-legend({'$PFD$','$E(PFD)$'}, 'Interpreter', 'latex', 'Location', 'best')
-ylabel('$PFD\;(t)$', 'Interpreter','latex')
+legend({'$PFD\;(t)$','$PFD$'}, 'Interpreter', 'latex', 'Location', 'best')
+ylabel('$PFD$', 'Interpreter','latex')
 grid on; set(gca, 'FontSize', 14)
 
 % Control Inputs
@@ -267,8 +267,8 @@ plot(times, nuhist(1,:), 'LineWidth', 2, 'Color', [0.93 0.69 0.13]); hold on
 plot(times, nuhist(2,:), 'LineWidth', 2, 'Color', [0.3 0.75 0.93]);
 xlim([0 times(end)]); ylim([0 1]);
 xticks([0 tau 2*tau 3*tau]); xticklabels({'0','\tau','2\tau','3\tau'})
-legend({'$z^*$','$\omega^*$'}, 'Interpreter', 'latex', 'Location', 'best')
-ylabel('$u^*(t)$', 'Interpreter','latex')
+legend({'$z^*\;(t)$','$\omega^*\;(t)$'}, 'Interpreter', 'latex', 'Location', 'best')
+ylabel('$u^*$', 'Interpreter','latex')
 grid on; set(gca, 'FontSize', 14)
 
 % Hazard Rate
@@ -278,7 +278,9 @@ yline(HRAvg, 'LineWidth', 2, 'LineStyle', '--', 'Color', [0 0.45 0.74]);
 yline(uHR, 'LineWidth', 2, 'LineStyle', ':', 'Color', [0.47 0.67 0.19]);
 xlim([0 times(end)]); ylim([0 2.2e-8])
 xticks([0 tau 2*tau 3*tau]); xticklabels({'0','\tau','2\tau','3\tau'})
-legend({'$HR$','$E(HR)$','$\overline{HR}$'}, 'Interpreter','latex', 'Location','best')
-ylabel('$HR\;(t)$', 'Interpreter','latex')
+legend({'$HR\;(t)$','$HR$','$\overline{HR}$'}, 'Interpreter','latex', 'Location','best')
+ylabel('$HR$', 'Interpreter','latex')
+xlabel('$t\;(s)$', 'Interpreter','latex')
+grid on; set(gca, 'FontSize', 14)
 xlabel('$t\;(s)$', 'Interpreter','latex')
 grid on; set(gca, 'FontSize', 14)
