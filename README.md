@@ -10,7 +10,7 @@ Sharing MATLAB code and data for reproducing results and facilitating review.
 
 * **`TestRegime.py`**: Python simulation code for optimization of proof test regime.
 * **`CompPFD.py`**: Python simulation code to compare varying and constant interval of proof test regimes.
-* **`MarkovLib.py`**: Library of functions to accompany `TestRegime.py` and `CompPFD.py` for realization of degradation model.
+* **`MarkovLib.py`**: Library of functions to accompany `TestRegime.py` and `CompPFD.py`.
 * **`FeedMPC.m`**: MATLAB simulation code for DAC of the feed pump using multi-stage NMPC.
 
 ## Requirement
