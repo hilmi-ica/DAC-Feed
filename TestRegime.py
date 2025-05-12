@@ -65,4 +65,3 @@ result = minimize(objective, x0, bounds=bounds, method='Powell')
 # Print result
 print(f"Optimal tau: {result.x[0]:.2f} hours")
 print(f"Optimal eta: {result.x[1]:.4f}")
-print(f"Minimum PFD_avg: {result.fun:.8e}")
