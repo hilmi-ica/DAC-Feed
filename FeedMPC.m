@@ -254,12 +254,12 @@ tiledlayout(3,1, 'Padding', 'compact', 'TileSpacing', 'compact');
 % PFD
 nexttile
 plot(times, PFD(1:end-1), 'LineWidth', 2, 'Color', [0.49 0.18 0.56]); hold on
-yline(PFDAvg, 'LineWidth', 2, 'LineStyle', '--', 'Color', [0.85 0.33 0.1]);
+yline(1e-3, 'LineWidth', 2, 'LineStyle', '--', 'Color', [0.85 0.33 0.1]);
 xlim([0 times(end)])
 xticks([tauC(1) tauC(3) tauC(5) tauC(7) tauC(9) tauC(11) tauC(13) tauC(15)]); 
 xticklabels({'\tau_0','\tau_2','\tau_4','\tau_6','\tau_8','\tau_{10}', ...
     '\tau_{12}','\tau_{14}'})
-legend({'$\mathrm{PFD}\;(t)$','$\mathrm{PFD}$'}, 'Interpreter', 'latex')
+legend({'$\mathrm{PFD}\;(t)$','$\mathrm{SIL\;2}$'}, 'Interpreter', 'latex')
 ylabel('$\mathrm{PFD}$', 'Interpreter','latex')
 grid on; set(gca, 'FontSize', 14)
 
@@ -278,7 +278,6 @@ grid on; set(gca, 'FontSize', 14)
 % Hazard Rate
 nexttile
 plot(times, HR, 'LineWidth', 2, 'Color', [0.64 0.08 0.18]); hold on
-yline(HRAvg, 'LineWidth', 2, 'LineStyle', '--', 'Color', [0 0.45 0.74]);
 yline(uHR, 'LineWidth', 2, 'LineStyle', ':', 'Color', [0.47 0.67 0.19]);
 xlim([0 times(end)]); ylim([0 2e-8])
 xticks([0 tauC(1) tauC(2) tauC(3) tauC(4) tauC(5) tauC(6) tauC(7) tauC(8) ...
@@ -286,7 +285,7 @@ xticks([0 tauC(1) tauC(2) tauC(3) tauC(4) tauC(5) tauC(6) tauC(7) tauC(8) ...
 xticks([tauC(1) tauC(3) tauC(5) tauC(7) tauC(9) tauC(11) tauC(13) tauC(15)]); 
 xticklabels({'\tau_0','\tau_2','\tau_4','\tau_6','\tau_8','\tau_{10}', ...
     '\tau_{12}','\tau_{14}'})
-legend({'$\mathrm{HR}\;(t)$','$\mathrm{HR}$','$\overline{\mathrm{HR}}$'}, ...
+legend({'$\mathrm{HR}\;(t)$','$\overline{\mathrm{HR}}$'}, ...
     'Interpreter','latex')
 ylabel('$\mathrm{HR}\;(h^{-1})$', 'Interpreter','latex')
 xlabel('$t\;(h)$', 'Interpreter','latex')
