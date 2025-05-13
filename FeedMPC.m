@@ -19,11 +19,12 @@ umin = [0; 2877]; umax = [1; 3356];
 
 % Degradation and hazard model parameters
 lamL = 6e-7; lam0 = 3e-6; zeta = 0.8; 
-T = 26280;  N = 3; tau = round(T / N); 
-tD = round(T * rand()); 
+T = 73000; tau0 = 9192.57; eta = 0.8922;
+% REDUCE T FOR FASTER SIMULATION
 
 % Health-aware model parameters
-uHR = 1.8e-8; gamma = 4e-5; b0 = 5; alpha = 0.5; beta = 0.3; lamf = 4e-7;
+uHR = 1.5e-8; gamma = 7e-5; b0_2 = 100; 
+b0_1 = 75; alpha = 0.3; lamf = 4e-7;
 
 % MPC configuration
 Q = eye(2); Rd = 0.5 * eye(2); Rh = 0.5;
@@ -97,9 +98,15 @@ controller = optimizer(constraints, objective, ...
 xk = [200.2; 216.2; 0; 0]; % Initial state
 oldu = [0.8; 3063];
 xhist = xk; uhist = oldu; nuhist = [];
-P0 = [0 0 0 1]; P = P0;
-PFD = P(1); PFDCum = PFD;
-HRCum = 0; t = 0; n = 0; m = 0; iDx = 0;
+HRCum = 0; t = 0; n = 0; o = 4; N = 16; iDx = 0;
+P0 = zeros(1,N+o); P0(1) = 1; P = P0;
+PFD = P(2); PFDCum = PFD; tau_c = tau0; tau = tau0;
+
+% Degradation model
+A = zeros(N+o); A(1,2) = lamf;
+A(1,o+n) = lmbda(gamma, b0_2, alpha, n);
+A(o+n,2) = lmbda(gamma, b0_1, alpha, n) + lamf;
+A = fixA(A);
 
 %% Simulation Loop
 hbar = waitbar(0, "Simulation Progression...");
@@ -107,33 +114,25 @@ for j = 1:(T/dt)+1
     tic;
 
     % Predict future PFD
-    PM = P; nM = n; mM = m; iDxM = iDx;
+    PM = P; nM = n; AM = A; tauM = tau; tau_cM = tau_c;
     for l = 1:Np
-        bM = b0 * exp(-alpha * nM - beta * mM);
-        lamM = gamma * (1 - (1 - exp(-bM)));
-        AM = [0 0 0 0;
-             lamf+lamM -(lamf+lamM) 0 0;
-             lamf lamM -(lamf+lamM) 0;
-             lamf 0 lamM -(lamf+lamM)];
-        PM = PM * (eye(4) + AM * dt);
+        PM = PM * (eye(N+o) + AM * dt);
 
         % Training event
-        if mod((j+l)*dt, tau) == 0 && (j+l)*dt ~= 0
-            if iDxM == 0
-                mM = mM + 1;
-                PM = [0 PM(2) PM(3) PM(4) + PM(1)];
-            else
-                iDxM = 0;
+        if mod((j+l)*dt, ceil(tau_cM)) == 0 && (j+l)*dt ~= 0
+            nM = nM + 1;
+            PM(3) = PM(3) + PM(2); PM(2) = 0;  
+            AM(1,o+nM) = lmbda(gamma, b0_2, alpha, nM);
+            A(1,o+nM-1) = 0;
+            for i = 0:nM
+                AM(o+i,2) = lmbda(gamma, b0_1, alpha, nM-i);
             end
+            AM = fixA(AM);
+            tauM = eta * tauM;
+            tau_cM = tau_cM + tauM;
         end
 
-        % Degradation event
-        if (j+l)*dt == tD
-            nM = nM + 1;
-            PM = [0 PM(2) PM(3) PM(4) + PM(1)];
-            iDxM = 1;
-        end
-        PFDM(l) = PM(1);
+        PFDM(l) = PM(2);
     end
 
     futurePFD = repmat(PFDM, 1, 1, Ns);
@@ -164,34 +163,26 @@ for j = 1:(T/dt)+1
           xk(1) + rhok * g * hk * 1e-5] + vk * dt;
     yk = C * xk + wk;
 
-    % Update degradation model
-    b = b0 * exp(-alpha * n - beta * m);
-    lam = gamma * (1 - (1 - exp(-b)));
-    A = [0 0 0 0;
-         lamf+lam -(lamf+lam) 0 0;
-         lamf lam -(lamf+lam) 0;
-         lamf 0 lam -(lamf+lam)];
-    P = P * (eye(4) + A * dt);
+    % Update degradation
+    P = P * (eye(N+o) + A * dt);
 
-    % Training and degradation
-    if mod(t, tau) == 0 && t ~= 0
-        if iDx == 0
-            m = m + 1;
-            P = [0 P(2) P(3) P(4) + P(1)];
-            xk = [200.2; 216.2; 0; 0]; uk = [0.8; 3063];
-        else
-            iDx = 0;
-        end
-    end
-    if t == tD
+    % Testing and degradation
+    if mod(t, ceil(tau_c)) == 0 && t ~= 0
         n = n + 1;
-        P = [0 P(2) P(3) P(4) + P(1)];
+        P(3) = P(3) + P(2); P(2) = 0;  
         xk = [200.2; 216.2; 0; 0]; uk = [0.8; 3063];
-        iDx = 1;
+        A(1,o+n) = lmbda(gamma, b0_2, alpha, n);
+        A(1,o+n) = 0;
+        for i = 0:n
+            A(o+i,2) = lmbda(gamma, b0_1, alpha, n-i);
+        end
+        A = fixA(A);
+        tau = eta * tau;
+        tau_c = tau_c + tau;
     end
-
+        
     % Compute health metrics
-    PFD(j+1) = P(1);
+    PFD(j+1) = P(2);
     nuk = (uk - umin) ./ (umax - umin);
     lamP = lam0 * exp(zeta * nuk(2));
     DR(j) = lamL + lamP;
@@ -221,7 +212,12 @@ PFDAvg = PFDCum / (T/dt + 2);
 HRAvg = HRCum / (T/dt + 1);
 
 times = linspace(0, T, j);
-
+tauC = ceil(tau0); tau_s = tau0;
+for i = 2:n
+    tau_s = eta * tau_s;
+    tauC(i) = ceil(tauC(i-1) + tau_s);
+end
+    
 %% State Tracking Plot
 fh1 = figure(1); clf;
 tiledlayout(2,1, 'Padding', 'compact', 'TileSpacing', 'compact');
@@ -230,9 +226,11 @@ tiledlayout(2,1, 'Padding', 'compact', 'TileSpacing', 'compact');
 nexttile
 plot(times, xhist(3,1:end-1), 'LineWidth', 2, 'Color', [0 0.45 0.74]); hold on
 yline(1.708e-3, 'LineWidth', 2, 'LineStyle', '--', 'Color', [0.85 0.33 0.1]);
-xlim([0 times(end)]); ylim([0 0.4e-2])
-xticks([0 tau 2*tau 3*tau]); xticklabels({'0','\tau','2\tau','3\tau'})
-legend({'$q_c\;(t)$','$q_c^{ref}$'}, 'Interpreter', 'latex', 'Location', 'best')
+xlim([0 times(end)]); ylim([0.1e-2 0.3e-2])
+xticks([tauC(1) tauC(3) tauC(5) tauC(7) tauC(9) tauC(11) tauC(13) tauC(15)]); 
+xticklabels({'\tau_0','\tau_2','\tau_4','\tau_6','\tau_8','\tau_{10}', ...
+    '\tau_{12}','\tau_{14}'})
+legend({'$q_c\;(t)$','$q_c^{ref}$'}, 'Interpreter', 'latex')
 ylabel('$q_c\;(m^3h^{-1})$', 'Interpreter','latex')
 grid on; set(gca, 'FontSize', 14)
 
@@ -240,11 +238,13 @@ grid on; set(gca, 'FontSize', 14)
 nexttile
 plot(times, xhist(4,1:end-1), 'LineWidth', 2, 'Color', [0.47 0.67 0.19]); hold on
 yline(230.2, 'LineWidth', 2, 'LineStyle', '--', 'Color', [0.85 0.33 0.1]);
-xlim([0 times(end)]); ylim([210 240])
-xticks([0 tau 2*tau 3*tau]); xticklabels({'0','\tau','2\tau','3\tau'})
-legend({'$p_f\;(t)$','$p_f^{ref}$'}, 'Interpreter', 'latex', 'Location', 'best')
+xlim([0 times(end)]); ylim([220 240])
+xticks([tauC(1) tauC(3) tauC(5) tauC(7) tauC(9) tauC(11) tauC(13) tauC(15)]); 
+xticklabels({'\tau_0','\tau_2','\tau_4','\tau_6','\tau_8','\tau_{10}', ...
+    '\tau_{12}','\tau_{14}'})
+legend({'$p_f\;(t)$','$p_f^{ref}$'}, 'Interpreter', 'latex')
 ylabel('$p_f\;(bar)$', 'Interpreter','latex')
-xlabel('$t\;(s)$', 'Interpreter','latex')
+xlabel('$t\;(h)$', 'Interpreter','latex')
 grid on; set(gca, 'FontSize', 14)
 
 %% Control & Risk Metrics Plot
@@ -256,9 +256,11 @@ nexttile
 plot(times, PFD(1:end-1), 'LineWidth', 2, 'Color', [0.49 0.18 0.56]); hold on
 yline(PFDAvg, 'LineWidth', 2, 'LineStyle', '--', 'Color', [0.85 0.33 0.1]);
 xlim([0 times(end)])
-xticks([0 tau 2*tau 3*tau]); xticklabels({'0','\tau','2\tau','3\tau'})
-legend({'$PFD\;(t)$','$PFD$'}, 'Interpreter', 'latex', 'Location', 'best')
-ylabel('$PFD$', 'Interpreter','latex')
+xticks([tauC(1) tauC(3) tauC(5) tauC(7) tauC(9) tauC(11) tauC(13) tauC(15)]); 
+xticklabels({'\tau_0','\tau_2','\tau_4','\tau_6','\tau_8','\tau_{10}', ...
+    '\tau_{12}','\tau_{14}'})
+legend({'$\mathrm{PFD}\;(t)$','$\mathrm{PFD}$'}, 'Interpreter', 'latex')
+ylabel('$\mathrm{PFD}$', 'Interpreter','latex')
 grid on; set(gca, 'FontSize', 14)
 
 % Control Inputs
@@ -266,8 +268,10 @@ nexttile
 plot(times, nuhist(1,:), 'LineWidth', 2, 'Color', [0.93 0.69 0.13]); hold on
 plot(times, nuhist(2,:), 'LineWidth', 2, 'Color', [0.3 0.75 0.93]);
 xlim([0 times(end)]); ylim([0 1]);
-xticks([0 tau 2*tau 3*tau]); xticklabels({'0','\tau','2\tau','3\tau'})
-legend({'$z^*\;(t)$','$\omega^*\;(t)$'}, 'Interpreter', 'latex', 'Location', 'best')
+xticks([tauC(1) tauC(3) tauC(5) tauC(7) tauC(9) tauC(11) tauC(13) tauC(15)]); 
+xticklabels({'\tau_0','\tau_2','\tau_4','\tau_6','\tau_8','\tau_{10}', ...
+    '\tau_{12}','\tau_{14}'})
+legend({'$z^*\;(t)$','$\omega^*\;(t)$'}, 'Interpreter', 'latex')
 ylabel('$u^*$', 'Interpreter','latex')
 grid on; set(gca, 'FontSize', 14)
 
@@ -276,11 +280,60 @@ nexttile
 plot(times, HR, 'LineWidth', 2, 'Color', [0.64 0.08 0.18]); hold on
 yline(HRAvg, 'LineWidth', 2, 'LineStyle', '--', 'Color', [0 0.45 0.74]);
 yline(uHR, 'LineWidth', 2, 'LineStyle', ':', 'Color', [0.47 0.67 0.19]);
-xlim([0 times(end)]); ylim([0 2.2e-8])
-xticks([0 tau 2*tau 3*tau]); xticklabels({'0','\tau','2\tau','3\tau'})
-legend({'$HR\;(t)$','$HR$','$\overline{HR}$'}, 'Interpreter','latex', 'Location','best')
-ylabel('$HR$', 'Interpreter','latex')
-xlabel('$t\;(s)$', 'Interpreter','latex')
+xlim([0 times(end)]); ylim([0 2e-8])
+xticks([0 tauC(1) tauC(2) tauC(3) tauC(4) tauC(5) tauC(6) tauC(7) tauC(8) ...
+    tauC(9) tauC(10) tauC(11) tauC(12) tauC(13) tauC(14) tauC(15) tauC(16)]); 
+xticks([tauC(1) tauC(3) tauC(5) tauC(7) tauC(9) tauC(11) tauC(13) tauC(15)]); 
+xticklabels({'\tau_0','\tau_2','\tau_4','\tau_6','\tau_8','\tau_{10}', ...
+    '\tau_{12}','\tau_{14}'})
+legend({'$\mathrm{HR}\;(t)$','$\mathrm{HR}$','$\overline{\mathrm{HR}}$'}, ...
+    'Interpreter','latex')
+ylabel('$\mathrm{HR}\;(h^{-1})$', 'Interpreter','latex')
+xlabel('$t\;(h)$', 'Interpreter','latex')
 grid on; set(gca, 'FontSize', 14)
-xlabel('$t\;(s)$', 'Interpreter','latex')
-grid on; set(gca, 'FontSize', 14)
+
+
+%% Utility Functions
+function tree = DistTree(dval_list, Nr)
+    Nd = numel(dval_list);
+    
+    % Generate all combinations for one time step
+    [G{1:Nd}] = ndgrid(dval_list{:});
+    one_step = reshape(cat(Nd+1, G{:}), [], Nd);
+    Nv = size(one_step, 1);
+
+    % Total scenarios
+    total_scenarios = Nv^Nr;
+    
+    % Generate all index combinations for Nr steps
+    idx_cells = cell(1, Nr);
+    [idx_cells{:}] = ndgrid(1:Nv);
+    idx_combo = reshape(cat(Nr+1, idx_cells{:}), [], Nr);
+
+    % Build the tree
+    tree = zeros(total_scenarios, Nd, Nr);
+    for t = 1:Nr
+        tree(:,:,t) = one_step(idx_combo(:,t), :);
+    end
+end
+
+function lambda_val = lmbda(gamma, b0, beta, n)
+    % Failure rate as function of n
+    b = b0 * exp(-beta * n);
+    lambda_val = gamma * (1 - b / (b + 1));
+end
+
+function A = fixA(A)
+    % Fill in the diagonal elements of a transition matrix
+    N = size(A,1);
+    for i = 1:N
+        s = 0;
+        for j = 1:N
+            if i ~= j
+                s = s + A(i,j);
+            end
+        end
+        A(i,i) = -s;
+    end
+end
+
