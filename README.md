@@ -1,4 +1,4 @@
-# DAC of Feed Pump using multi-stage NMPC
+# DAC of Feed Pump using Multi-Stage NMPC
 
 This repository contains simulations for degradation-aware control (DAC) of the feed pump using the multi-stage NMPC algorithm, supporting our submission to the IEEE International Conference on Instrumentation, Control, and Automation (ICA).
 
