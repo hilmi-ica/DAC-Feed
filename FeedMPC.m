@@ -125,7 +125,7 @@ for j = 1:(T/dt)+1
             AM(1,o+nM) = lmbda(gamma, b0_2, alpha, nM);
             A(1,o+nM-1) = 0;
             for i = 0:nM
-                AM(o+i,2) = lmbda(gamma, b0_1, alpha, nM-i);
+                AM(o+i,2) = lmbda(gamma, b0_1, alpha, nM-i) + lamf;
             end
             AM = fixA(AM);
             tauM = eta * tauM;
