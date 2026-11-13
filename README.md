@@ -20,7 +20,7 @@ Sharing MATLAB code and data for reproducing results and facilitating review.
 
 ## Reference
 
-M. Hilmi, J. Vatn and M. -A. Lundteigen, "Markov-Based Degradation-Aware Predictive Control on Subsea Safety System," 2025 9th International Conference on Instrumentation, Control, and Automation (ICA), Bandung, Indonesia, 2025, pp. 9-16.
+M. Hilmi, J. Vatn and M. -A. Lundteigen, "Markov-Based Degradation-Aware Predictive Control on Subsea Safety System," 2025 9th International Conference on Instrumentation, Control, and Automation (ICA), Bandung, Indonesia, 2025, pp. 9-16, doi: 10.1109/ICA65945.2025.11253575.
 ```
 @INPROCEEDINGS{DAC-Feed,
   author={Hilmi, Muhammad and Vatn, Jørn and Lundteigen, Mary-Ann},
